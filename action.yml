@@ -1,0 +1,101 @@
+name: "CodeGuardian PR Review"
+description: "AI-powered Pull Request reviewer that detects bad patterns, security issues, and performance problems"
+author: "CodeGuardian"
+
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  github_token:
+    description: "GitHub token for posting review comments"
+    required: true
+    default: ${{ github.token }}
+  anthropic_api_key:
+    description: "Anthropic API key for AI-powered review (optional)"
+    required: false
+  use_ai:
+    description: "Enable AI-powered review"
+    required: false
+    default: "false"
+  model:
+    description: "Claude model to use for AI review"
+    required: false
+    default: "claude-sonnet-4-20250514"
+  fail_on:
+    description: "Fail the action if issues at this severity or above are found (critical, high, medium, low)"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install CodeGuardian
+      shell: bash
+      run: pip install ${{ github.action_path }}
+
+    - name: Get PR diff
+      shell: bash
+      id: diff
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }} > /tmp/pr.diff
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+
+    - name: Run CodeGuardian
+      shell: bash
+      run: |
+        ARGS="review /tmp/pr.diff"
+        if [ "${{ inputs.use_ai }}" = "true" ]; then
+          ARGS="$ARGS --ai --model ${{ inputs.model }}"
+        fi
+        if [ -n "${{ inputs.fail_on }}" ]; then
+          ARGS="$ARGS --fail-on ${{ inputs.fail_on }}"
+        fi
+        codeguardian $ARGS --json > /tmp/review.json
+        codeguardian $ARGS
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+
+    - name: Post review comment
+      shell: bash
+      if: always()
+      run: |
+        if [ -f /tmp/review.json ]; then
+          python -c "
+        import json, sys
+        data = json.load(open('/tmp/review.json'))
+        findings = data.get('findings', [])
+        summary = data.get('summary', 'No summary')
+        risk = data.get('risk_score', 0)
+
+        body = '## CodeGuardian Review\n\n'
+        body += f'{summary}\n\n**Risk Score:** {risk}/100\n\n'
+
+        if findings:
+            body += '| Severity | Category | File | Issue |\n'
+            body += '|----------|----------|------|-------|\n'
+            for f in findings:
+                loc = f['file']
+                if f.get('line'):
+                    loc += f\":{f['line']}\"
+                body += f\"| {f['severity']} | {f['category']} | {loc} | {f['title']} |\n\"
+        else:
+            body += 'No issues found. Looking good!\n'
+
+        body += '\n---\n*Reviewed by CodeGuardian*'
+        print(body)
+        with open('/tmp/review_body.md', 'w') as out:
+            out.write(body)
+        "
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body-file /tmp/review_body.md
+        fi
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
