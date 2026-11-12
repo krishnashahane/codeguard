@@ -1,5 +1,6 @@
 """Main analysis orchestrator."""
 from __future__ import annotations
+
 from codeguardian.core.ai_reviewer import ai_review
 from codeguardian.core.diff_parser import parse_diff
 from codeguardian.core.rules.base import Rule
