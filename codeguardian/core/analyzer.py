@@ -11,7 +11,11 @@ from codeguardian.core.rules.patterns import (
     LargeDiffRule,
     TodoFixmeRule,
 )
-from codeguardian.core.rules.performance import BlockingCallRule, LargeAllocationRule, NPlus1Rule
+from codeguardian.core.rules.performance import (
+    BlockingCallRule,
+    LargeAllocationRule,
+    NPlus1Rule,
+)
 from codeguardian.core.rules.security import (
     CommandInjectionRule,
     InsecurePracticeRule,
