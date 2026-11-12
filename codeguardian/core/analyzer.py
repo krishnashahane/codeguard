@@ -59,10 +59,10 @@ def analyze(
         ai_result = ai_review(files, api_key=api_key, model=model)
         result = result.merge(ai_result)
         if "manual review is required" in ai_result.summary.lower():
-            result.summary = f"{result.summary} {ai_result.summary}".strip()
-        # Preserve the model's explicit risk assessment, including the
-        # fail-closed score for malformed output, while never under-scoring
-        # findings identified by deterministic rules.
+            deterministic_summary = _generate_summary(result, len(files))
+            result.summary = f"{deterministic_summary} {ai_result.summary}".strip()
+        # Preserve an explicit fail-closed score from AI validation while
+        # ensuring deterministic findings are reflected in the score.
         result.risk_score = max(result.risk_score, _calculate_risk(result))
 
     if not result.summary:

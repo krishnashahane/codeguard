@@ -72,6 +72,7 @@ def test_ai_failure_risk_and_warning_are_preserved(monkeypatch):
     result = analyzer.analyze(CLEAN_DIFF, use_ai=True, api_key="test-key")
     assert result.risk_score == 100
     assert "manual review is required" in result.summary.lower()
+    assert "No issues found" in result.summary
 
 
 def test_run_rules_accepts_an_explicit_empty_rule_set():
