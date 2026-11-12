@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.concurrency import run_in_threadpool
 
@@ -15,7 +16,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     use_ai: bool = False
     log_level: str = "INFO"
-    max_webhook_bytes: int = 1_000_000
+    max_webhook_bytes: int = Field(default=1_000_000, ge=1, le=10_000_000)
     model_config = SettingsConfigDict(env_prefix="CODEGUARDIAN_", extra="ignore")
 
 settings = Settings()
@@ -41,9 +42,12 @@ async def webhook(request: Request) -> dict[str, Any]:
                 raise HTTPException(status_code=413, detail="Webhook payload too large")
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid Content-Length") from exc
-    body = await request.body()
-    if len(body) > settings.max_webhook_bytes:
-        raise HTTPException(status_code=413, detail="Webhook payload too large")
+    chunks = bytearray()
+    async for chunk in request.stream():
+        chunks.extend(chunk)
+        if len(chunks) > settings.max_webhook_bytes:
+            raise HTTPException(status_code=413, detail="Webhook payload too large")
+    body = bytes(chunks)
     if not verify_webhook_signature(body, signature, settings.github_webhook_secret):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
     try:
