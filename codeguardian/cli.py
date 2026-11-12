@@ -72,7 +72,7 @@ def _get_diff(diff_file: Path | None, use_git: bool, branch: str | None) -> str:
     if branch:
         return _run_git("diff", f"{branch}...HEAD")
     if use_git:
-        return _run_git("diff", "--staged") or _run_git("diff")
+        return _run_git("diff", "HEAD")
     if not sys.stdin.isatty():
         return sys.stdin.read()
     raise click.UsageError("Provide a diff file, --git, --branch, or pipe a diff to stdin.")
