@@ -103,4 +103,4 @@ Configure GitHub webhook events `pull_request` and `ping`, with the same signing
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT.
