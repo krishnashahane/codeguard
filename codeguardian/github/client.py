@@ -5,7 +5,7 @@ import hmac
 import logging
 import httpx
 from github import Auth, Github
-from codeguardian.models import Finding, ReviewResult
+from codeguardian.models import Finding, ReviewResult, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,8 @@ def post_review(token: str, repo: str, pr_number: int, result: ReviewResult) -> 
         if comments:
             try:
                 latest_commit = pr.get_commits().reversed[0]
-                pr.create_review(commit=latest_commit, body=body, event="COMMENT", comments=comments)
+                event = "REQUEST_CHANGES" if any(f.severity in (Severity.CRITICAL, Severity.HIGH) for f in result.findings) else "COMMENT"
+                pr.create_review(commit=latest_commit, body=body, event=event, comments=comments)
                 return
             except Exception as exc:
                 logger.warning("Inline review could not be posted; falling back to summary: %s", exc)
