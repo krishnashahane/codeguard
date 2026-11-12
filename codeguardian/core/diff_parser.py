@@ -1,6 +1,8 @@
 """Parse unified diff format into structured data."""
 from __future__ import annotations
+
 import re
+
 from codeguardian.models import DiffFile
 
 _DIFF_HEADER = re.compile(r"^diff --git a/(.+?) b/(.+?)$")
