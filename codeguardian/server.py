@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Any
 from fastapi import FastAPI, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -54,7 +55,7 @@ async def webhook(request: Request) -> dict[str, Any]:
     if event == "pull_request":
         if not settings.github_token:
             raise HTTPException(status_code=503, detail="GitHub token is not configured")
-        handle_pull_request(payload, github_token=settings.github_token, anthropic_api_key=settings.anthropic_api_key or None, use_ai=settings.use_ai)
+        await run_in_threadpool(handle_pull_request, payload, github_token=settings.github_token, anthropic_api_key=settings.anthropic_api_key or None, use_ai=settings.use_ai)
         return {"status": "ok", "event": event}
     return {"status": "ignored", "event": event}
 
