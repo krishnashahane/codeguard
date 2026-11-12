@@ -1,10 +1,13 @@
 """GitHub API client for retrieving diffs and publishing reviews."""
 from __future__ import annotations
+
 import hashlib
 import hmac
 import logging
+
 import httpx
 from github import Auth, Github
+
 from codeguardian.models import Finding, ReviewResult, Severity
 
 logger = logging.getLogger(__name__)
