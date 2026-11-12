@@ -1,12 +1,15 @@
 """CLI interface for CodeGuardian."""
 from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
 from codeguardian.core.analyzer import analyze
 from codeguardian.models import ReviewResult, Severity
 
