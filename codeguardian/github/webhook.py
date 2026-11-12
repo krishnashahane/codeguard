@@ -1,6 +1,8 @@
 """GitHub webhook event handlers."""
 from __future__ import annotations
+
 import logging
+
 from codeguardian.core.analyzer import analyze
 from codeguardian.github.client import get_pr_diff, post_review
 
