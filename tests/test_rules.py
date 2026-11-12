@@ -1,21 +1,21 @@
 """Tests for rule-based analyzers."""
 
 from codeguardian.core.diff_parser import parse_diff
+from codeguardian.core.rules.patterns import (
+    DebugStatementRule,
+    DeepNestingRule,
+    EmptyExceptRule,
+    LargeDiffRule,
+)
+from codeguardian.core.rules.performance import LargeAllocationRule, NPlus1Rule
 from codeguardian.core.rules.security import (
+    CommandInjectionRule,
+    InsecurePracticeRule,
     SecretsRule,
     SQLInjectionRule,
     XSSRule,
-    CommandInjectionRule,
-    InsecurePracticeRule,
 )
-from codeguardian.core.rules.performance import NPlus1Rule, LargeAllocationRule
-from codeguardian.core.rules.patterns import (
-    EmptyExceptRule,
-    DebugStatementRule,
-    DeepNestingRule,
-    LargeDiffRule,
-)
-from codeguardian.models import Severity, Category
+from codeguardian.models import Category, Severity
 
 
 def _make_diff(filename: str, lines: list[str]) -> str:
