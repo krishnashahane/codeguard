@@ -1,7 +1,7 @@
 """Tests for the main analyzer."""
 
 from codeguardian.core.analyzer import analyze
-from codeguardian.models import Severity, Category
+from codeguardian.models import Severity
 
 VULNERABLE_DIFF = """\
 diff --git a/app.py b/app.py
