@@ -1,6 +1,6 @@
 """Pydantic model invariants."""
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from codeguardian.models import Category, Finding, ReviewResult, Severity
 
