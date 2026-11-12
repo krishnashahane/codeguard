@@ -1,7 +1,7 @@
 """Tests for the main analyzer."""
 
 from codeguardian.core.analyzer import analyze
-from codeguardian.models import Severity
+from codeguardian.models import ReviewResult, Severity
 
 VULNERABLE_DIFF = """\
 diff --git a/app.py b/app.py
@@ -56,6 +56,24 @@ def test_analyze_empty_diff():
 def test_risk_score_bounded():
     result = analyze(VULNERABLE_DIFF)
     assert 0 <= result.risk_score <= 100
+
+
+def test_ai_failure_risk_and_warning_are_preserved(monkeypatch):
+    import codeguardian.core.analyzer as analyzer
+
+    monkeypatch.setattr(
+        analyzer,
+        "ai_review",
+        lambda *args, **kwargs: ReviewResult(
+            summary="AI review returned invalid data; manual review is required.",
+            risk_score=100,
+        ),
+    )
+    result = analyzer.analyze(CLEAN_DIFF, use_ai=True, api_key="test-key")
+    assert result.risk_score == 100
+    assert "manual review is required" in result.summary.lower()
+
+
 def test_run_rules_accepts_an_explicit_empty_rule_set():
     from codeguardian.core.analyzer import run_rules
     from codeguardian.models import DiffFile
