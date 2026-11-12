@@ -4,10 +4,11 @@ from __future__ import annotations
 from codeguardian.core.ai_reviewer import ai_review
 from codeguardian.core.diff_parser import parse_diff
 from codeguardian.core.rules.base import Rule
-from codeguardian.core.rules.performance import BlockingCallRule, LargeAllocationRule, NPlus1Rule
 from codeguardian.core.rules.patterns import DebugStatementRule, DeepNestingRule, EmptyExceptRule, LargeDiffRule, TodoFixmeRule
+from codeguardian.core.rules.performance import BlockingCallRule, LargeAllocationRule, NPlus1Rule
 from codeguardian.core.rules.security import CommandInjectionRule, InsecurePracticeRule, SecretsRule, SQLInjectionRule, XSSRule
 from codeguardian.models import DiffFile, ReviewResult, Severity
+
 
 ALL_RULES: list[Rule] = [SecretsRule(), SQLInjectionRule(), XSSRule(), CommandInjectionRule(), InsecurePracticeRule(), NPlus1Rule(), LargeAllocationRule(), BlockingCallRule(), EmptyExceptRule(), DebugStatementRule(), DeepNestingRule(), LargeDiffRule(), TodoFixmeRule()]
 
