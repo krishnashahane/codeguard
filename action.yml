@@ -93,23 +93,25 @@ runs:
           exit 0
         fi
         python - <<'PY'
-import json
-import os
-from pathlib import Path
-result = json.loads(Path(os.environ["REVIEW_PATH"]).read_text(encoding="utf-8"))
-def clean(value):
-    return str(value).replace("|", r"\\|").replace("\\r", " ").replace("\\n", " ")
-body = ["## CodeGuardian Review", "", clean(result.get("summary", "Review completed.")), "", f"**Risk score:** {int(result.get('risk_score', 0))}/100", ""]
-findings = result.get("findings") or []
-if findings:
-    body.extend(["| Severity | Category | File | Issue |", "|---|---|---|---|"])
-    for finding in findings:
-        location = clean(finding.get("file", "unknown"))
-        if finding.get("line"): location += f":{int(finding['line'])}"
-        body.append("| " + " | ".join((clean(finding.get("severity", "info")), clean(finding.get("category", "unknown")), location, clean(finding.get("title", "Finding")))) + " |")
-else:
-    body.append("No issues were reported by the configured checks.")
-body.extend(["", "---", "*Reviewed by CodeGuardian*"])
-Path(os.environ["RUNNER_TEMP"], "codeguardian-review.md").write_text("\\n".join(body), encoding="utf-8")
-PY
+        import json
+        import os
+        from pathlib import Path
+        result = json.loads(Path(os.environ["REVIEW_PATH"]).read_text(encoding="utf-8"))
+        def clean(value):
+            return str(value).replace("|", chr(92) + "|").replace(chr(13), " ").replace(chr(10), " ")
+        body = ["## CodeGuardian Review", "", clean(result.get("summary", "Review completed.")), "", f"**Risk score:** {int(result.get('risk_score', 0))}/100", ""]
+        findings = result.get("findings") or []
+        if findings:
+            body.extend(["| Severity | Category | File | Issue |", "|---|---|---|---|"])
+            for finding in findings:
+                location = clean(finding.get("file", "unknown"))
+                if finding.get("line"):
+                    location += f":{int(finding['line'])}"
+                cells = (clean(finding.get("severity", "info")), clean(finding.get("category", "unknown")), location, clean(finding.get("title", "Finding")))
+                body.append("| " + " | ".join(cells) + " |")
+        else:
+            body.append("No issues were reported by the configured checks.")
+        body.extend(["", "---", "*Reviewed by CodeGuardian*"])
+        Path(os.environ["RUNNER_TEMP"], "codeguardian-review.md").write_text(chr(10).join(body), encoding="utf-8")
+        PY
         gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body-file "$RUNNER_TEMP/codeguardian-review.md"
