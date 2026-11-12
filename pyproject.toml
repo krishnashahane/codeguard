@@ -1,34 +1,33 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "codeguardian"
 version = "1.0.0"
-description = "AI-powered Pull Request reviewer that detects bad patterns, security issues, and performance problems"
+description = "Static and AI-assisted pull-request reviewer for security, performance, and maintainability risks"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
-dependencies = [
-    "anthropic>=0.39.0",
-    "fastapi>=0.115.0",
-    "uvicorn>=0.32.0",
-    "httpx>=0.27.0",
-    "click>=8.1.0",
-    "rich>=13.9.0",
-    "pydantic>=2.9.0",
-    "pydantic-settings>=2.6.0",
-    "pygithub>=2.4.0",
-]
+dependencies = ["anthropic>=0.39.0", "fastapi>=0.115.0", "uvicorn>=0.32.0", "httpx>=0.27.0", "click>=8.1.0", "rich>=13.9.0", "pydantic>=2.9.0", "pydantic-settings>=2.6.0", "pygithub>=2.4.0"]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-asyncio>=0.24.0",
-]
+dev = ["pytest>=8.0", "ruff>=0.9.0"]
 
 [project.scripts]
 codeguardian = "codeguardian.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["codeguardian*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
