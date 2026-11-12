@@ -3,8 +3,8 @@ import hashlib
 import hmac
 import json
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 import codeguardian.server as server
 
