@@ -5,6 +5,7 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class Severity(str, Enum):
     CRITICAL = "critical"
     HIGH = "high"
