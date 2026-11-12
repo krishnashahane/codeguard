@@ -63,14 +63,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: krishnashahane/codeguard@v1
+      - uses: krishnashahane/codeguard@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           use_ai: "false"
           fail_on: "high"
 ```
 
-Grant only required workflow permissions. AI is disabled by default. Store credentials in repository secrets, not workflow source.
+Grant only required workflow permissions. AI is disabled by default. Store credentials in repository secrets, not workflow source. After a tagged release is published, pin the Action to that release tag or an immutable commit SHA.
 
 ## Webhook service
 
