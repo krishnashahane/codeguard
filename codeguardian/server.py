@@ -10,6 +10,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.concurrency import run_in_threadpool
 
+
 class Settings(BaseSettings):
     github_token: str = ""
     github_webhook_secret: str = ""
