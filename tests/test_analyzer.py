@@ -1,7 +1,7 @@
 """Tests for the main analyzer."""
 
 from codeguardian.core.analyzer import analyze
-from codeguardian.models import Severity, Category
+from codeguardian.models import Severity
 
 VULNERABLE_DIFF = """\
 diff --git a/app.py b/app.py
@@ -56,3 +56,11 @@ def test_analyze_empty_diff():
 def test_risk_score_bounded():
     result = analyze(VULNERABLE_DIFF)
     assert 0 <= result.risk_score <= 100
+def test_run_rules_accepts_an_explicit_empty_rule_set():
+    from codeguardian.core.analyzer import run_rules
+    from codeguardian.models import DiffFile
+
+    file = DiffFile(path="app.py", added_lines=[(1, "print('debug')")], removed_lines=[])
+    result = run_rules([file], rules=[])
+    assert result.findings == []
+    assert result.risk_score == 0

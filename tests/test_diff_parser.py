@@ -75,3 +75,32 @@ deleted file mode 100644
     assert len(files) == 1
     assert files[0].is_deleted is True
     assert len(files[0].removed_lines) == 3
+
+def test_diff_parser_ignores_no_newline_marker():
+    diff = """\\
+diff --git a/new.py b/new.py
+new file mode 100644
+--- /dev/null
++++ b/new.py
+@@ -0,0 +1 @@
++value = 1
+\\ No newline at end of file
+"""
+    files = parse_diff(diff)
+    assert len(files) == 1
+    assert files[0].added_lines == [(1, "value = 1")]
+
+
+def test_deleted_file_keeps_original_path():
+    diff = """\\
+diff --git a/removed.py b/removed.py
+deleted file mode 100644
+--- a/removed.py
++++ /dev/null
+@@ -1,1 +0,0 @@
+-value = 1
+"""
+    files = parse_diff(diff)
+    assert len(files) == 1
+    assert files[0].path == "removed.py"
+    assert files[0].is_deleted
