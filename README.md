@@ -1,120 +1,106 @@
 # CodeGuardian
 
-AI-powered Pull Request reviewer that detects bad patterns, security issues, and performance problems.
+**CodeGuardian** reviews pull-request diffs for security, performance, correctness and maintainability risks. It includes a local CLI, a reusable GitHub Action and an optional GitHub webhook service.
 
-## Features
+## Capabilities
 
-- **13 built-in rules** covering security, performance, and code quality
-- **AI-powered review** using Claude for deeper analysis
-- **3 deployment modes**: CLI, GitHub Action, webhook server
-- **Risk scoring** (0-100) for every review
-- **CI/CD integration** with configurable fail thresholds
+- 13 deterministic rules for common security and code-quality patterns.
+- Optional AI-assisted review for contextual analysis.
+- Severity-ranked findings and a bounded 0–100 risk score.
+- CLI support for diff files, stdin, staged changes and branch comparisons.
+- GitHub Action and webhook-driven PR reviews.
 
-### Detection Categories
+CodeGuardian is a review aid, not a replacement for human review, SAST/DAST, dependency scanning or security testing. Pattern-based rules can produce false positives and miss context-dependent defects.
 
-| Category | Examples |
-|----------|----------|
-| Security | Hardcoded secrets, SQL injection, XSS, command injection, insecure practices |
-| Performance | N+1 queries, large allocations, blocking calls |
-| Bad Patterns | Debug statements, bare except, deep nesting, large diffs, TODOs |
+## Requirements
 
-## Installation
+- Python 3.10 or later.
+- Git for CLI git modes.
+- A GitHub token with pull-request read/write permissions for automated reviews.
+- An Anthropic API key only when AI review is enabled.
+
+## Install
 
 ```bash
-pip install .
+python -m pip install .
 ```
 
-## Usage
-
-### CLI
+For development:
 
 ```bash
-# Review a diff file
+python -m pip install -e ".[dev]"
+pytest
+ruff check .
+```
+
+## CLI
+
+```bash
 codeguardian review changes.diff
-
-# Review staged git changes
 codeguardian review --git
-
-# Compare against a branch
 codeguardian review --branch main
-
-# Pipe from stdin
-git diff | codeguardian review
-
-# With AI review
-codeguardian review --git --ai
-
-# JSON output for CI
-codeguardian review changes.diff --json --fail-on high
-
-# List all rules
+git diff origin/main...HEAD | codeguardian review
+codeguardian review changes.diff --json
+codeguardian review changes.diff --fail-on high
+ANTHROPIC_API_KEY=... codeguardian review changes.diff --ai
 codeguardian rules
 ```
 
-### GitHub Action
+Choose exactly one diff source: file, `--git`, `--branch`, or stdin. JSON mode writes only JSON to stdout; diagnostics go to stderr.
+
+## GitHub Action
 
 ```yaml
-name: PR Review
+name: CodeGuardian
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-
 permissions:
   contents: read
   pull-requests: write
-
 jobs:
   review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: your-org/CodeGuardian@v1
+      - uses: krishnashahane/codeguard@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}  # optional
           use_ai: "false"
-          fail_on: "critical"
+          fail_on: "high"
 ```
 
-### Webhook Server
+Grant only required workflow permissions. AI is disabled by default. Store credentials in repository secrets, not workflow source.
+
+## Webhook service
 
 ```bash
-# Configure via environment variables
-export CODEGUARDIAN_GITHUB_TOKEN=ghp_...
-export CODEGUARDIAN_GITHUB_WEBHOOK_SECRET=your_secret
-export CODEGUARDIAN_ANTHROPIC_API_KEY=sk-...  # optional
-export CODEGUARDIAN_USE_AI=false
-
-# Run the server
-uvicorn codeguardian.server:app --host 0.0.0.0 --port 8000
-
-# Or with Docker
-docker build -t codeguardian .
-docker run -p 8000:8000 \
-  -e CODEGUARDIAN_GITHUB_TOKEN=ghp_... \
-  -e CODEGUARDIAN_GITHUB_WEBHOOK_SECRET=secret \
-  codeguardian
+export CODEGUARDIAN_GITHUB_TOKEN="..."
+export CODEGUARDIAN_GITHUB_WEBHOOK_SECRET="..."
+export CODEGUARDIAN_USE_AI="false"
+uvicorn codeguardian.server:app --host 127.0.0.1 --port 8000
 ```
 
-Point your GitHub webhook to `https://your-server/webhook` with the `pull_request` event.
+Configure GitHub webhook events `pull_request` and `ping`, with the same signing secret. Requests without a valid `X-Hub-Signature-256` are rejected. A request-body size limit is enforced. Use TLS termination, a reverse proxy and network restrictions before exposing the service publicly.
 
 ## Configuration
 
-| Environment Variable | Description |
-|---------------------|-------------|
-| `ANTHROPIC_API_KEY` | API key for Claude AI review (CLI) |
-| `CODEGUARDIAN_GITHUB_TOKEN` | GitHub token (webhook server) |
-| `CODEGUARDIAN_GITHUB_WEBHOOK_SECRET` | Webhook secret (server) |
-| `CODEGUARDIAN_ANTHROPIC_API_KEY` | API key (server) |
-| `CODEGUARDIAN_USE_AI` | Enable AI review (server) |
+| Variable | Purpose |
+|---|---|
+| `ANTHROPIC_API_KEY` | Optional AI key for CLI |
+| `CODEGUARDIAN_GITHUB_TOKEN` | Token used by webhook service |
+| `CODEGUARDIAN_GITHUB_WEBHOOK_SECRET` | Required webhook signing secret |
+| `CODEGUARDIAN_ANTHROPIC_API_KEY` | Optional AI key for webhook service |
+| `CODEGUARDIAN_USE_AI` | Enable AI review in webhook service |
+| `CODEGUARDIAN_LOG_LEVEL` | Python log level |
 
-## Development
+## Security and privacy
 
-```bash
-pip install -e ".[dev]"
-pytest
-```
+- Diffs sent to the optional AI provider leave your environment; enable AI only when policy permits.
+- Webhook signatures are mandatory. Store secrets in environment variables or a secret manager.
+- Use least-privilege GitHub tokens and restrict network access to the webhook service.
+- Review findings before treating them as confirmed vulnerabilities.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
