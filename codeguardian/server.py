@@ -1,11 +1,13 @@
 """FastAPI webhook server for receiving GitHub events."""
 from __future__ import annotations
+
 import json
 import logging
 from typing import Any
+
 from fastapi import FastAPI, HTTPException, Request
-from starlette.concurrency import run_in_threadpool
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from starlette.concurrency import run_in_threadpool
 
 class Settings(BaseSettings):
     github_token: str = ""
