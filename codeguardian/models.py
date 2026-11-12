@@ -1,10 +1,7 @@
-"""Data models for CodeGuardian."""
-
+"""Validated data models for CodeGuardian."""
 from __future__ import annotations
-
 from enum import Enum
-from pydantic import BaseModel
-
+from pydantic import BaseModel, ConfigDict, Field
 
 class Severity(str, Enum):
     CRITICAL = "critical"
@@ -13,7 +10,6 @@ class Severity(str, Enum):
     LOW = "low"
     INFO = "info"
 
-
 class Category(str, Enum):
     SECURITY = "security"
     PERFORMANCE = "performance"
@@ -21,43 +17,37 @@ class Category(str, Enum):
     BUG_RISK = "bug_risk"
     MAINTAINABILITY = "maintainability"
 
-
 class Finding(BaseModel):
-    file: str
-    line: int | None = None
+    model_config = ConfigDict(str_strip_whitespace=True)
+    file: str = Field(min_length=1, max_length=1024)
+    line: int | None = Field(default=None, ge=1)
     severity: Severity
     category: Category
-    title: str
-    description: str
-    suggestion: str | None = None
-
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=10000)
+    suggestion: str | None = Field(default=None, max_length=10000)
 
 class DiffFile(BaseModel):
-    path: str
+    path: str = Field(min_length=1, max_length=1024)
     old_path: str | None = None
-    added_lines: list[tuple[int, str]]
-    removed_lines: list[tuple[int, str]]
+    added_lines: list[tuple[int, str]] = Field(default_factory=list)
+    removed_lines: list[tuple[int, str]] = Field(default_factory=list)
     is_new: bool = False
     is_deleted: bool = False
     raw_diff: str = ""
 
-
 class ReviewResult(BaseModel):
-    findings: list[Finding] = []
+    findings: list[Finding] = Field(default_factory=list)
     summary: str = ""
-    risk_score: int = 0  # 0-100
+    risk_score: int = Field(default=0, ge=0, le=100)
 
     @property
     def critical_count(self) -> int:
-        return sum(1 for f in self.findings if f.severity == Severity.CRITICAL)
+        return sum(f.severity == Severity.CRITICAL for f in self.findings)
 
     @property
     def high_count(self) -> int:
-        return sum(1 for f in self.findings if f.severity == Severity.HIGH)
+        return sum(f.severity == Severity.HIGH for f in self.findings)
 
     def merge(self, other: ReviewResult) -> ReviewResult:
-        return ReviewResult(
-            findings=self.findings + other.findings,
-            summary=self.summary or other.summary,
-            risk_score=max(self.risk_score, other.risk_score),
-        )
+        return ReviewResult(findings=self.findings + other.findings, summary=self.summary or other.summary, risk_score=max(self.risk_score, other.risk_score))
